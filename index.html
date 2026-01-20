@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bloxd Texture Browser</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f0f0f;
+  color: #fff;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  background: #151515;
+  padding: 10px;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+select {
+  background: #222;
+  color: white;
+  border: 1px solid #444;
+  padding: 6px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+
+.texture {
+  position: relative;
+  background: #1c1c1c;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.texture img {
+  width: 100%;
+  image-rendering: pixelated;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  padding: 4px 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.texture:hover .tooltip {
+  opacity: 1;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <strong>Bloxd Textures</strong>
+
+  <select id="sort">
+    <option value="az">Sort A → Z</option>
+    <option value="za">Sort Z → A</option>
+    <option value="blocks">Blocks only</option>
+    <option value="items">Items only</option>
+  </select>
+</header>
+
+<div id="grid" class="grid"></div>
+
+<script>
+let ALL_TEXTURES = [];
+
+const grid = document.getElementById("grid");
+const sortSelect = document.getElementById("sort");
+
+fetch("textures.json")
+  .then(r => r.json())
+  .then(data => {
+    ALL_TEXTURES = data.textures;
+    render(ALL_TEXTURES);
+  });
+
+sortSelect.addEventListener("change", () => {
+  let list = [...ALL_TEXTURES];
+
+  switch (sortSelect.value) {
+    case "az":
+      list.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+
+    case "za":
+      list.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+
+    case "blocks":
+      list = list.filter(t => t.isBlock);
+      break;
+
+    case "items":
+      list = list.filter(t => !t.isBlock);
+      break;
+  }
+
+  render(list);
+});
+
+function render(list) {
+  grid.innerHTML = "";
+
+  for (const tex of list) {
+    const div = document.createElement("div");
+    div.className = "texture";
+
+    const img = document.createElement("img");
+    img.src = tex.url;
+
+    const tip = document.createElement("div");
+    tip.className = "tooltip";
+    tip.textContent =
+      tex.name + (tex.isBlock ? " (Block)" : " (Item)");
+
+    div.appendChild(tip);
+    div.appendChild(img);
+    grid.appendChild(div);
+  }
+}
+</script>
+
+</body>
+</html>
